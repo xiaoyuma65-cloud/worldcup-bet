@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tiên Tri Bóng Đá · Dự Đoán World Cup</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Rajdhani:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg0: #050a06;
+  --bg1: #0a160c;
+  --bg2: #0f2214;
+  --bg3: #16331e;
+  --green: #1db954;
+  --green2: #25e668;
+  --green-dim: rgba(29,185,84,0.15);
+  --gold: #f0c040;
+  --gold2: #ffd700;
+  --gold-dim: rgba(240,192,64,0.12);
+  --orange: #ff7c2a;
+  --red: #ff3b3b;
+  --blue: #38b6ff;
+  --white: #eef4ee;
+  --dim: rgba(238,244,238,0.5);
+  --dim2: rgba(238,244,238,0.25);
+  --card: rgba(10,22,12,0.9);
+  --card2: rgba(16,36,20,0.95);
+  --border: rgba(29,185,84,0.2);
+  --border-gold: rgba(240,192,64,0.3);
+  --r: 12px;
+  --r2: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--bg0);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ══ BACKGROUND ══════════════════════════════════════════ */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden;
+  background:
+    radial-gradient(ellipse 140% 60% at 50% 110%, #0d2e14 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 10% 20%, #071a0a 0%, transparent 50%),
+    linear-gradient(160deg, #030705 0%, #060e07 40%, #0a1a0c 100%);
+}
+/* pitch lines */
+.bg-pitch {
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(29,185,84,0.04) 80px),
+    repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(29,185,84,0.04) 80px);
+}
+/* center circle */
+.bg-circle {
+  position: absolute; left:50%; top:45%; transform:translate(-50%,-50%);
+  width: 400px; height: 400px; border-radius: 50%;
+  border: 1px solid rgba(29,185,84,0.06);
+}
+.bg-circle2 {
+  position: absolute; left:50%; top:45%; transform:translate(-50%,-50%);
+  width: 200px; height: 200px; border-radius: 50%;
+  border: 1px solid rgba(29,185,84,0.04);
+}
+/* crosshair decorations */
+.bg-cross {
+  position: absolute; opacity: 0.04;
+  font-size: 80px; color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+}
+.bg-cross.c1 { top: 8%; left: 5%; }
+.bg-cross.c2 { top: 30%; right: 4%; }
+.bg-cross.c3 { bottom: 20%; left: 8%; }
+/* scan line */
+.bg-scan {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,255,80,0.008) 3px, rgba(0,255,80,0.008) 4px
+  );
+  pointer-events: none;
+}
+/* glow spots */
+.bg-glow {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); pointer-events: none;
+}
+.bg-glow.g1 {
+  width: 300px; height: 300px;
+  background: rgba(29,185,84,0.06);
+  top: -50px; left: -80px;
+  animation: glowPulse 6s ease-in-out infinite;
+}
+.bg-glow.g2 {
+  width: 250px; height: 250px;
+  background: rgba(240,192,64,0.05);
+  bottom: 100px; right: -60px;
+  animation: glowPulse 8s ease-in-out infinite reverse;
+}
+@keyframes glowPulse {
+  0%,100%{ opacity:0.6; transform:scale(1); }
+  50%{ opacity:1; transform:scale(1.15); }
+}
+
+/* ══ LAYOUT ══════════════════════════════════════════════ */
+.page { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; }
+
+/* ══ TOPBAR ══════════════════════════════════════════════ */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  height: 52px;
+  background: rgba(3,7,4,0.97);
+  border-bottom: 1px solid rgba(29,185,84,0.18);
+  backdrop-filter: blur(20px);
+}
+.logo-area { display:flex; align-items:center; gap:8px; }
+.logo-icon { font-size: 20px; }
+.logo-text {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 17px; font-weight: 900;
+  background: linear-gradient(135deg, var(--gold2), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+}
+.logo-sub { font-size: 9px; color: var(--dim2); letter-spacing: 2px; display:block; margin-top:-2px; }
+
+.topbar-right { display:flex; align-items:center; gap:10px; }
+.coin-pill {
+  display: flex; align-items: center; gap:6px;
+  background: linear-gradient(135deg, rgba(20,60,24,0.9), rgba(8,20,10,0.9));
+  border: 1px solid var(--border-gold);
+  border-radius: 20px; padding: 5px 12px;
+  cursor: pointer; transition: all .2s;
+}
+.coin-pill:hover { border-color: var(--gold); box-shadow: 0 0 12px rgba(240,192,64,0.2); }
+.coin-icon { font-size: 15px; }
+.coin-val { font-size: 14px; font-weight: 700; color: var(--gold); font-family:'Rajdhani',sans-serif; letter-spacing:.5px; }
+.coin-lbl { font-size: 8px; color: var(--dim2); letter-spacing:1px; }
+.login-btn {
+  font-size: 12px; font-weight: 700; padding: 6px 14px;
+  border-radius: 20px; cursor: pointer; border: none;
+  background: linear-gradient(135deg, #1a7a30, #25a844);
+  color: var(--white); letter-spacing:.5px; transition: all .2s;
+}
+.login-btn:hover { transform:translateY(-1px); box-shadow: 0 4px 12px rgba(29,185,84,0.3); }
+
+/* ══ HERO BANNER ═════════════════════════════════════════ */
+.hero {
+  position: relative; padding: 28px 20px 20px;
+  text-align: center; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(29,185,84,0.06) 0%, transparent 100%);
+}
+.hero-eyebrow {
+  font-size: 10px; letter-spacing: 4px; color: var(--green);
+  margin-bottom: 6px; text-transform: uppercase;
+}
+.hero-title {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 42px; font-weight: 900; line-height: 1;
+  background: linear-gradient(135deg, #fff9e6 0%, var(--gold2) 40%, var(--gold) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: 4px; margin-bottom: 4px;
+  filter: drop-shadow(0 0 20px rgba(240,192,64,0.3));
+}
+.hero-sub {
+  font-size: 11px; color: var(--dim); letter-spacing: 2px; margin-bottom: 16px;
+}
+.hero-tags { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+.hero-tag {
+  font-size: 10px; padding: 3px 10px; border-radius: 10px;
+  background: var(--green-dim); border: 1px solid rgba(29,185,84,0.25);
+  color: var(--green2); letter-spacing: .5px;
+}
+
+/* ══ ACTIVITY INTRO ══════════════════════════════════════ */
+.intro-card {
+  margin: 0 14px 14px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+}
+.intro-title {
+  font-size: 11px; letter-spacing: 2px; color: var(--green2);
+  margin-bottom: 8px; display:flex; align-items:center; gap:6px;
+}
+.intro-title::after { content:''; flex:1; height:1px; background:var(--border); }
+.intro-text { font-size: 11px; line-height: 1.7; color: var(--dim); }
+
+/* ══ ACTION ROW ══════════════════════════════════════════ */
+.action-row {
+  display: flex; gap: 10px; padding: 0 14px 14px;
+}
+.action-btn {
+  flex: 1; display:flex; flex-direction:column; align-items:center; gap:5px;
+  background: var(--card2);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--r); padding: 12px 8px;
+  cursor: pointer; transition: all .22s;
+}
+.action-btn:hover {
+  border-color: var(--gold); transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.5), 0 0 12px rgba(240,192,64,.1);
+}
+.action-btn .ab-icon { font-size: 22px; }
+.action-btn .ab-name { font-size: 11px; font-weight: 700; color: var(--gold); letter-spacing:.5px; }
+
+/* ══ MAIN CONTROLS ═══════════════════════════════════════ */
+.main-controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px 14px;
+}
+.ctrl-btn {
+  font-size: 12px; font-weight: 700; padding: 8px 16px;
+  border-radius: var(--r2); cursor: pointer; transition: all .2s;
+  border: 1px solid var(--border); background: var(--card2);
+  color: var(--white); letter-spacing:.5px;
+}
+.ctrl-btn:hover { border-color: var(--green2); color: var(--green2); }
+.ctrl-btn.primary {
+  background: linear-gradient(135deg, #1a7a30, #25a844);
+  border-color: transparent; color: var(--white);
+  box-shadow: 0 2px 10px rgba(29,185,84,.25);
+}
+.ctrl-btn.primary:hover { box-shadow: 0 4px 16px rgba(29,185,84,.4); transform:translateY(-1px); }
+.coin-display {
+  flex: 1; display:flex; align-items:center; justify-content:center; gap:6px;
+  background: var(--gold-dim); border: 1px solid var(--border-gold);
+  border-radius: var(--r2); padding: 8px 12px;
+}
+.coin-display .cd-icon { font-size: 14px; }
+.coin-display .cd-val { font-size: 15px; font-weight: 700; color: var(--gold); font-family:'Rajdhani',sans-serif; }
+.coin-display .cd-lbl { font-size: 9px; color: var(--dim2); }
+
+/* ══ DATE FILTER ═════════════════════════════════════════ */
+.date-filter { padding: 0 14px 10px; }
+.date-filter-label { font-size: 10px; color: var(--dim2); letter-spacing:1px; margin-bottom:6px; }
+.date-tabs { display:flex; gap:6px; }
+.dtab {
+  padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all .18s; letter-spacing:.5px;
+  border: 1px solid rgba(255,255,255,.12); color: var(--dim2); background: transparent;
+  white-space: nowrap;
+}
+.dtab.active {
+  background: linear-gradient(135deg, #1a6b28, #0e3d16);
+  border-color: var(--green2); color: var(--white);
+  box-shadow: 0 0 10px rgba(29,185,84,.25);
+}
+.dtab:hover:not(.active) { border-color: rgba(255,255,255,.3); color: var(--white); }
+
+/* ══ SECTION DIVIDER ══════════════════════════════════════ */
+.sdiv {
+  display:flex; align-items:center; gap:8px;
+  padding: 4px 14px 8px; font-size:10px; color:var(--dim2); letter-spacing:2px;
+}
+.sdiv::before,.sdiv::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ══ MATCH CARD ══════════════════════════════════════════ */
+.matches { padding: 0 14px 20px; display:flex; flex-direction:column; gap:10px; }
+.day-section { display:none; }
+.day-section.active { display:flex; flex-direction:column; gap:10px; }
+
+.mcard {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden; transition: box-shadow .2s;
+  position: relative;
+}
+.mcard:hover { box-shadow: 0 6px 24px rgba(0,0,0,.5), 0 0 1px rgba(29,185,84,.2); }
+.mcard.settled { opacity: .75; }
+.mcard.settled::after {
+  content: 'Đã KT'; position:absolute; top:10px; right:12px;
+  font-size:9px; font-weight:700; color:var(--dim2);
+  background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+  padding: 2px 8px; border-radius:4px; letter-spacing:1px;
+}
+
+.mcard-head {
+  display:flex; justify-content:space-between; align-items:center;
+  padding: 8px 13px;
+  background: linear-gradient(90deg, rgba(29,185,84,.07), transparent, rgba(29,185,84,.07));
+  border-bottom: 1px solid rgba(29,185,84,.12);
+}
+.group-tag {
+  font-size: 10px; font-weight:700; letter-spacing:1.5px;
+  color: var(--green2); background: rgba(29,185,84,.1);
+  padding: 2px 8px; border-radius:4px; border:1px solid rgba(29,185,84,.22);
+}
+.match-date { font-size:10px; color:var(--dim2); }
+.live-dot {
+  font-size:10px; font-weight:700; color:var(--red);
+  background: rgba(255,59,59,.1); border:1px solid rgba(255,59,59,.28);
+  padding:2px 7px; border-radius:4px;
+  animation: livePulse 1.2s ease-in-out infinite;
+}
+@keyframes livePulse { 0%,100%{opacity:1}50%{opacity:.3} }
+
+.mcard-body { padding:14px 13px 12px; }
+
+/* teams row */
+.teams-row {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px;
+}
+.team-col { display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; }
+.team-flag { font-size:32px; line-height:1; filter:drop-shadow(0 2px 5px rgba(0,0,0,.5)); }
+.team-name { font-size:11px; font-weight:700; text-align:center; }
+.team-odds-val {
+  font-family: 'Rajdhani', sans-serif;
+  font-size:18px; font-weight:700; color:var(--gold); letter-spacing:1px;
+}
+
+.vs-col { text-align:center; flex:0 0 44px; }
+.vs-txt {
+  font-family:'Rajdhani',sans-serif;
+  font-size:24px; font-weight:700; color:rgba(240,192,64,.55); letter-spacing:2px;
+}
+
+/* bet options */
+.bet-row { display:flex; gap:6px; }
+.bet-opt {
+  flex:1; border-radius:var(--r2); padding:9px 6px;
+  cursor:pointer; transition:all .2s;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04); text-align:center;
+}
+.bet-opt:hover { border-color:var(--gold); background:rgba(240,192,64,.06); }
+.bet-opt.active-h { border-color:#4caf50; background:rgba(76,175,80,.12); box-shadow:0 0 8px rgba(76,175,80,.2); }
+.bet-opt.active-d { border-color:var(--gold); background:var(--gold-dim); box-shadow:0 0 8px rgba(240,192,64,.2); }
+.bet-opt.active-a { border-color:#38b6ff; background:rgba(56,182,255,.12); box-shadow:0 0 8px rgba(56,182,255,.2); }
+.bet-opt.draw-opt { flex:0 0 52px; border-color:rgba(240,192,64,.15); background:rgba(240,192,64,.03); }
+.bo-lbl { font-size:9px; color:var(--dim2); letter-spacing:.5px; margin-bottom:2px; }
+.bo-team { font-size:10px; font-weight:700; color:rgba(255,255,255,.8); }
+.bo-odds {
+  font-family:'Rajdhani',sans-serif;
+  font-size:16px; font-weight:700; color:var(--gold); margin-top:1px;
+}
+
+/* stake row */
+.stake-row { margin-top:10px; display:flex; gap:7px; align-items:center; }
+.quick-btns { display:flex; gap:4px; }
+.qbtn {
+  font-size:10px; font-weight:700; padding:4px 7px;
+  border-radius:6px; cursor:pointer; transition:all .14s;
+  background:rgba(240,192,64,.08); border:1px solid rgba(240,192,64,.18);
+  color:var(--gold);
+}
+.qbtn:hover { background:rgba(240,192,64,.18); }
+.stake-input {
+  flex:1; background:rgba(255,255,255,.06);
+  border:1px solid rgba(240,192,64,.2);
+  border-radius:var(--r2); padding:5px 10px;
+  color:var(--white); font-size:13px; outline:none; text-align:center;
+  font-family:'Rajdhani',sans-serif; font-weight:600;
+}
+.bet-btn {
+  padding:5px 13px; border-radius:var(--r2);
+  font-size:12px; font-weight:700; cursor:pointer; transition:all .18s;
+  background:linear-gradient(135deg,#c8a000,var(--gold2));
+  color:#060e00; border:none; letter-spacing:.5px;
+  box-shadow:0 2px 8px rgba(240,192,64,.25); white-space:nowrap;
+}
+.bet-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(240,192,64,.38); }
+
+/* settled card result */
+.settled-result {
+  margin-top:10px; padding:8px 12px;
+  background:rgba(255,255,255,.04); border-radius:var(--r2);
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px;
+}
+.sr-label { color:var(--dim2); }
+.sr-val.win { color:var(--green2); font-weight:700; }
+.sr-val.lose { color:var(--red); font-weight:700; }
+
+/* ══ RULES SECTION ═══════════════════════════════════════ */
+.rules-section {
+  margin: 0 14px 30px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+}
+.rules-title {
+  font-size:12px; font-weight:700; color:var(--gold);
+  letter-spacing:2px; margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.rules-title::after { content:''; flex:1; height:1px; background:var(--border-gold); }
+.rules-text {
+  font-size:11px; line-height:1.85; color:var(--dim);
+  white-space:pre-line;
+}
+
+/* ══ MODAL OVERLAY ═══════════════════════════════════════ */
+.overlay {
+  display:none; position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,.82); backdrop-filter:blur(8px);
+  align-items:flex-end; justify-content:center;
+}
+.overlay.open { display:flex; animation:fadeIn .2s; }
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.sheet {
+  width:100%; max-width:480px;
+  background:linear-gradient(180deg,#0d2410 0%,#060e06 100%);
+  border-top:1px solid rgba(240,192,64,.25);
+  border-radius:20px 20px 0 0;
+  padding:0 0 44px;
+  animation:slideUp .3s cubic-bezier(.2,.8,.4,1);
+  max-height:80vh; display:flex; flex-direction:column;
+  position:relative;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle { width:40px; height:4px; background:rgba(255,255,255,.14); border-radius:2px; margin:12px auto 0; flex-shrink:0; }
+.sheet-title {
+  font-family:'Noto Serif TC',serif;
+  font-size:18px; font-weight:700; color:var(--gold);
+  text-align:center; padding:12px 0 12px; flex-shrink:0;
+  border-bottom:1px solid rgba(240,192,64,.12); letter-spacing:2px;
+}
+.sheet-close {
+  position:absolute; right:16px; top:16px;
+  font-size:18px; color:var(--dim2); cursor:pointer;
+  background:none; border:none; transition:color .15s;
+}
+.sheet-close:hover { color:var(--white); }
+.sheet-body { overflow-y:auto; flex:1; padding:0 16px; }
+
+/* ── Login modal (center) ── */
+.overlay.center { align-items:center; }
+.dialog {
+  width:calc(100% - 40px); max-width:340px;
+  background:linear-gradient(180deg,#0d2410,#060e06);
+  border:1px solid var(--border-gold);
+  border-radius:16px; padding:24px;
+  position:relative;
+  animation:popIn .25s cubic-bezier(.2,.8,.4,1);
+}
+@keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.dialog-title {
+  font-family:'Noto Serif TC',serif;
+  font-size:17px; font-weight:700; color:var(--gold);
+  text-align:center; margin-bottom:20px; letter-spacing:2px;
+}
+.form-group { margin-bottom:14px; }
+.form-label { font-size:11px; color:var(--dim2); margin-bottom:5px; display:block; letter-spacing:.5px; }
+.form-input {
+  width:100%; background:rgba(255,255,255,.06);
+  border:1px solid var(--border); border-radius:var(--r2);
+  padding:9px 12px; color:var(--white); font-size:13px;
+  outline:none; transition:border-color .2s;
+}
+.form-input:focus { border-color:var(--green2); }
+.form-row { display:flex; gap:8px; }
+.form-row .form-input { flex:1; }
+.code-btn {
+  padding:9px 12px; border-radius:var(--r2);
+  background:linear-gradient(135deg,#1a7a30,#25a844);
+  color:var(--white); font-size:11px; font-weight:700;
+  border:none; cursor:pointer; white-space:nowrap; transition:all .2s;
+}
+.code-btn:hover { box-shadow:0 2px 10px rgba(29,185,84,.3); }
+.dialog-btns { display:flex; gap:10px; margin-top:20px; }
+.dbtn {
+  flex:1; padding:10px; border-radius:var(--r2);
+  font-size:13px; font-weight:700; cursor:pointer; transition:all .2s;
+  letter-spacing:.5px;
+}
+.dbtn.cancel { background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--dim); }
+.dbtn.confirm {
+  background:linear-gradient(135deg,#1a7a30,#25a844);
+  border:none; color:var(--white);
+  box-shadow:0 2px 10px rgba(29,185,84,.25);
+}
+.dbtn.confirm:hover { box-shadow:0 4px 14px rgba(29,185,84,.4); transform:translateY(-1px); }
+
+/* ── Confirm bet dialog ── */
+.confirm-content { text-align:center; padding:8px 0 4px; }
+.confirm-icon { font-size:36px; margin-bottom:10px; }
+.confirm-q { font-size:14px; font-weight:700; margin-bottom:6px; }
+.confirm-detail { font-size:12px; color:var(--dim); margin-bottom:4px; }
+.confirm-warn { font-size:11px; color:var(--orange); margin-top:8px; }
+
+/* ── Tasks ── */
+.task-list { padding:14px 0; display:flex; flex-direction:column; gap:9px; }
+.task-item {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
+  border-radius:10px; padding:11px 12px;
+}
+.ti-icon { font-size:20px; flex-shrink:0; }
+.ti-info { flex:1; }
+.ti-name { font-size:12px; font-weight:700; }
+.ti-desc { font-size:10px; color:var(--dim2); margin-top:2px; }
+.ti-prog { height:3px; background:rgba(255,255,255,.08); border-radius:2px; margin-top:5px; overflow:hidden; }
+.ti-bar { height:100%; background:linear-gradient(90deg,var(--green),var(--gold)); border-radius:2px; }
+.ti-reward { display:flex; flex-direction:column; align-items:center; gap:3px; flex-shrink:0; }
+.ti-coin { font-size:10px; font-weight:700; color:var(--gold); }
+.ti-btn {
+  font-size:10px; padding:3px 10px; border-radius:6px;
+  background:linear-gradient(135deg,#c8a000,var(--gold2));
+  color:#060e00; font-weight:700; cursor:pointer; border:none; transition:all .14s;
+}
+.ti-btn:hover { transform:scale(1.05); }
+.ti-btn.done { background:rgba(255,255,255,.08); color:var(--dim2); cursor:default; }
+.ti-btn.done:hover { transform:none; }
+
+/* ── Shop ── */
+.shop-grid { padding:14px 0; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.shop-item {
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  border-radius:10px; padding:10px 6px; text-align:center;
+  cursor:pointer; transition:all .2s;
+}
+.shop-item:hover { border-color:var(--gold); transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.3); }
+.shop-item.rare { border-color:rgba(255,100,100,.25); background:rgba(255,50,50,.04); }
+.shop-item.rare .si-name { color:#ff8888; }
+.si-tag { font-size:8px; color:var(--dim2); letter-spacing:1px; margin-bottom:2px; }
+.si-icon { font-size:24px; margin-bottom:4px; }
+.si-name { font-size:10px; font-weight:700; color:rgba(255,255,255,.85); }
+.si-price { font-size:11px; font-weight:700; color:var(--gold); margin-top:4px; }
+
+/* ── Record tabs ── */
+.rec-tabs { display:flex; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:14px; }
+.rec-tab {
+  flex:1; text-align:center; padding:10px 0; font-size:12px; font-weight:700;
+  cursor:pointer; color:var(--dim2); border-bottom:2px solid transparent;
+  transition:all .18s; letter-spacing:.5px;
+}
+.rec-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.rec-panel { display:none; }
+.rec-panel.active { display:block; }
+.rec-table { width:100%; border-collapse:collapse; font-size:11px; }
+.rec-table th {
+  text-align:left; padding:6px 8px; color:var(--dim2); font-weight:600;
+  border-bottom:1px solid rgba(255,255,255,.08); letter-spacing:.5px;
+}
+.rec-table td { padding:8px 8px; border-bottom:1px solid rgba(255,255,255,.05); vertical-align:middle; }
+.rec-table tr:last-child td { border-bottom:none; }
+.pnl-pos { color:var(--green2); font-weight:700; }
+.pnl-neg { color:var(--red); font-weight:700; }
+.status-win { color:var(--green2); font-size:10px; font-weight:700; }
+.status-lose { color:var(--red); font-size:10px; }
+.status-pend { color:var(--gold); font-size:10px; }
+.rec-empty { text-align:center; padding:30px 0; color:var(--dim2); font-size:12px; }
+
+/* ── Notice tooltip ── */
+.notice-box {
+  margin:0 14px 14px;
+  background:rgba(240,192,64,.08); border:1px solid rgba(240,192,64,.22);
+  border-radius:var(--r2); padding:10px 14px;
+  border-left:3px solid var(--gold);
+}
+.notice-item {
+  font-size:11px; color:var(--dim); line-height:1.7;
+  padding-left:12px; position:relative;
+}
+.notice-item::before { content:'·'; position:absolute; left:0; color:var(--gold); }
+
+/* ══ TOAST ═══════════════════════════════════════════════ */
+.toast {
+  position:fixed; top:62px; left:50%; transform:translateX(-50%) translateY(-8px);
+  background:linear-gradient(135deg,#1a6b28,#0e3d16);
+  border:1px solid var(--green2); color:var(--white);
+  font-size:12px; font-weight:700; padding:7px 18px;
+  border-radius:20px; z-index:300;
+  opacity:0; transition:all .25s; pointer-events:none; white-space:nowrap;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ══ SCROLLBAR ════════════════════════════════════════════ */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(29,185,84,.3); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- BG -->
+<div class="bg-layer">
+  <div class="bg-pitch"></div>
+  <div class="bg-circle"></div>
+  <div class="bg-circle2"></div>
+  <div class="bg-cross c1">⊕</div>
+  <div class="bg-cross c2">⊕</div>
+  <div class="bg-cross c3">⊕</div>
+  <div class="bg-scan"></div>
+  <div class="bg-glow g1"></div>
+  <div class="bg-glow g2"></div>
+</div>
+
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo-area">
+      <span class="logo-icon">⚽</span>
+      <div>
+        <span class="logo-text">TIÊN TRI BÓNG ĐÁ</span>
+        <span class="logo-sub">MINI GUN BATTLE ELITE</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="coin-pill">
+        <span class="coin-icon">🪙</span>
+        <div>
+          <div class="coin-val" id="coinDisplay">10,000</div>
+          <div class="coin-lbl">Đồng Bóng Đá</div>
+        </div>
+      </div>
+      <button class="login-btn" onclick="openOverlay('login')">Đăng Nhập</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">2026 FIFA WORLD CUP · SỰ KIỆN DỰ ĐOÁN</div>
+    <div class="hero-title">TIÊN TRI BÓNG ĐÁ</div>
+    <div class="hero-sub">Dự đoán kết quả · Nhận phần thưởng hấp dẫn</div>
+    <div class="hero-tags">
+      <span class="hero-tag">⚽ 48 đội bóng</span>
+      <span class="hero-tag">🏆 104 trận đấu</span>
+      <span class="hero-tag">📅 39 ngày thi đấu</span>
+    </div>
+  </div>
+
+  <!-- ACTIVITY INTRO -->
+  <div class="intro-card">
+    <div class="intro-title">Giới Thiệu Sự Kiện</div>
+    <div class="intro-text">玩家透過完成每日任務獲得專屬代幣【Đồng Bóng Đá】，對世界盃賽事進行預測。猜中即可獲得賠率倍數的代幣，最終可在【Cửa Hàng Xanh】兌換豐富獎勵。充值亦可附贈Đồng Bóng Đá。</div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="action-row">
+    <div class="action-btn" onclick="openOverlay('task')">
+      <span class="ab-icon">🎯</span>
+      <span class="ab-name">獲取Đồng Bóng Đá</span>
+    </div>
+    <div class="action-btn" onclick="openOverlay('shop')">
+      <span class="ab-icon">🏪</span>
+      <span class="ab-name">Cửa Hàng Xanh</span>
+    </div>
+    <div class="action-btn" onclick="openOverlay('record')">
+      <span class="ab-icon">📋</span>
+      <span class="ab-name">Lịch Sử Thưởng</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTROLS -->
+  <div class="main-controls">
+    <button class="ctrl-btn" onclick="openOverlay('record')">Lịch Sử Cược</button>
+    <div class="coin-display">
+      <span class="cd-icon">🪙</span>
+      <span class="cd-val" id="coinDisplay2">10,000</span>
+      <span class="cd-lbl">我的Đồng Bóng Đá</span>
+    </div>
+    <button class="ctrl-btn primary" onclick="openOverlay('shop')">Vào Cửa Hàng</button>
+  </div>
+
+  <!-- NOTICE -->
+  <div class="notice-box">
+    <div class="notice-item">每場比賽最低下注 10 Đồng Bóng Đá，無上限</div>
+    <div class="notice-item">下注後Đồng Bóng Đá即扣除，比賽開始後無法Hủy</div>
+    <div class="notice-item">Tự động đóng cược 5 phút trước khi bóng lăn</div>
+  </div>
+
+  <!-- DATE FILTER -->
+  <div class="date-filter">
+    <div class="date-filter-label">Ngày Thi Đấu</div>
+    <div class="date-tabs">
+      <div class="dtab active" onclick="switchDay('jun13',this)">13/6</div>
+      <div class="dtab" onclick="switchDay('jun14',this)">14/6</div>
+      <div class="dtab" onclick="switchDay('jun15',this)">15/6</div>
+    </div>
+  </div>
+
+  <!-- MATCHES -->
+  <div class="matches">
+
+    <!-- JUN 13 -->
+    <div class="day-section active" id="day-jun13">
+
+      <!-- Card 1: Qatar vs Switzerland -->
+      <div class="mcard">
+        <div class="mcard-head">
+          <span class="group-tag">Bảng B</span>
+          <span class="match-date">13/6 12:00</span>
+        </div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col">
+              <div class="team-flag">🇶🇦</div>
+              <div class="team-name">Qatar</div>
+              <div class="team-odds-val">3.20</div>
+            </div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col">
+              <div class="team-flag">🇨🇭</div>
+              <div class="team-name">Thụy Sĩ</div>
+              <div class="team-odds-val">2.00</div>
+            </div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m1-h" onclick="selBet('m1','h',this)">
+              <div class="bo-lbl">Chủ Thắng</div>
+              <div class="bo-team">Qatar</div>
+              <div class="bo-odds">3.20</div>
+            </div>
+            <div class="bet-opt draw-opt" id="m1-d" onclick="selBet('m1','d',this)">
+              <div class="bo-lbl">Hòa</div>
+              <div class="bo-team">—</div>
+              <div class="bo-odds">3.10</div>
+            </div>
+            <div class="bet-opt" id="m1-a" onclick="selBet('m1','a',this)">
+              <div class="bo-lbl">Khách Thắng</div>
+              <div class="bo-team">Thụy Sĩ</div>
+              <div class="bo-odds">2.00</div>
+            </div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns">
+              <div class="qbtn" onclick="setQ('m1',50)">50</div>
+              <div class="qbtn" onclick="setQ('m1',100)">100</div>
+              <div class="qbtn" onclick="setQ('m1',500)">500</div>
+              <div class="qbtn" onclick="setQ('m1',1000)">1000</div>
+            </div>
+            <input class="stake-input" id="s-m1" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m1','Qatar','Thụy Sĩ')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Brazil vs Morocco LIVE -->
+      <div class="mcard">
+        <div class="mcard-head">
+          <span class="group-tag">Bảng C</span>
+          <span class="match-date">13/6 15:00</span>
+          <span class="live-dot">● TRỰC TIẾP</span>
+        </div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col">
+              <div class="team-flag">🇧🇷</div>
+              <div class="team-name">Brazil</div>
+              <div class="team-odds-val">1.55</div>
+            </div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col">
+              <div class="team-flag">🇲🇦</div>
+              <div class="team-name">Maroc</div>
+              <div class="team-odds-val">5.50</div>
+            </div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m2-h" onclick="selBet('m2','h',this)">
+              <div class="bo-lbl">Chủ Thắng</div>
+              <div class="bo-team">Brazil</div>
+              <div class="bo-odds">1.55</div>
+            </div>
+            <div class="bet-opt draw-opt" id="m2-d" onclick="selBet('m2','d',this)">
+              <div class="bo-lbl">Hòa</div>
+              <div class="bo-team">—</div>
+              <div class="bo-odds">3.80</div>
+            </div>
+            <div class="bet-opt" id="m2-a" onclick="selBet('m2','a',this)">
+              <div class="bo-lbl">Khách Thắng</div>
+              <div class="bo-team">Maroc</div>
+              <div class="bo-odds">5.50</div>
+            </div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns">
+              <div class="qbtn" onclick="setQ('m2',50)">50</div>
+              <div class="qbtn" onclick="setQ('m2',100)">100</div>
+              <div class="qbtn" onclick="setQ('m2',500)">500</div>
+              <div class="qbtn" onclick="setQ('m2',1000)">1000</div>
+            </div>
+            <input class="stake-input" id="s-m2" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m2','Brazil','Maroc')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Haiti vs Scotland — settled example -->
+      <div class="mcard settled">
+        <div class="mcard-head">
+          <span class="group-tag">Bảng C</span>
+          <span class="match-date">13/6 18:00</span>
+        </div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col">
+              <div class="team-flag">🇭🇹</div>
+              <div class="team-name">Haiti</div>
+              <div class="team-odds-val">4.00</div>
+            </div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col">
+              <div class="team-flag">🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+              <div class="team-name">Scotland</div>
+              <div class="team-odds-val">1.90</div>
+            </div>
+          </div>
+          <div class="settled-result">
+            <span class="sr-label">您的Cược：Scotland Khách Thắng × 1.90 · 500幣</span>
+            <span class="sr-val win">+450 幣</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Australia vs Türkiye -->
+      <div class="mcard">
+        <div class="mcard-head">
+          <span class="group-tag">Bảng D</span>
+          <span class="match-date">13/6 21:00</span>
+        </div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col">
+              <div class="team-flag">🇦🇺</div>
+              <div class="team-name">Úc</div>
+              <div class="team-odds-val">2.50</div>
+            </div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col">
+              <div class="team-flag">🇹🇷</div>
+              <div class="team-name">Thổ Nhĩ Kỳ</div>
+              <div class="team-odds-val">2.60</div>
+            </div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m4-h" onclick="selBet('m4','h',this)">
+              <div class="bo-lbl">Chủ Thắng</div>
+              <div class="bo-team">Úc</div>
+              <div class="bo-odds">2.50</div>
+            </div>
+            <div class="bet-opt draw-opt" id="m4-d" onclick="selBet('m4','d',this)">
+              <div class="bo-lbl">Hòa</div>
+              <div class="bo-team">—</div>
+              <div class="bo-odds">3.10</div>
+            </div>
+            <div class="bet-opt" id="m4-a" onclick="selBet('m4','a',this)">
+              <div class="bo-lbl">Khách Thắng</div>
+              <div class="bo-team">Thổ Nhĩ Kỳ</div>
+              <div class="bo-odds">2.60</div>
+            </div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns">
+              <div class="qbtn" onclick="setQ('m4',50)">50</div>
+              <div class="qbtn" onclick="setQ('m4',100)">100</div>
+              <div class="qbtn" onclick="setQ('m4',500)">500</div>
+              <div class="qbtn" onclick="setQ('m4',1000)">1000</div>
+            </div>
+            <input class="stake-input" id="s-m4" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m4','Úc','Thổ Nhĩ Kỳ')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JUN 14 -->
+    <div class="day-section" id="day-jun14">
+      <div class="mcard">
+        <div class="mcard-head"><span class="group-tag">Bảng E</span><span class="match-date">14/6 10:00</span></div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col"><div class="team-flag">🇩🇪</div><div class="team-name">Đức</div><div class="team-odds-val">1.22</div></div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col"><div class="team-flag">🇨🇼</div><div class="team-name">Curaçao</div><div class="team-odds-val">9.50</div></div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m5-h" onclick="selBet('m5','h',this)"><div class="bo-lbl">Chủ Thắng</div><div class="bo-team">Đức</div><div class="bo-odds">1.22</div></div>
+            <div class="bet-opt draw-opt" id="m5-d" onclick="selBet('m5','d',this)"><div class="bo-lbl">Hòa</div><div class="bo-team">—</div><div class="bo-odds">6.50</div></div>
+            <div class="bet-opt" id="m5-a" onclick="selBet('m5','a',this)"><div class="bo-lbl">Khách Thắng</div><div class="bo-team">Curaçao</div><div class="bo-odds">9.50</div></div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns"><div class="qbtn" onclick="setQ('m5',50)">50</div><div class="qbtn" onclick="setQ('m5',100)">100</div><div class="qbtn" onclick="setQ('m5',500)">500</div><div class="qbtn" onclick="setQ('m5',1000)">1000</div></div>
+            <input class="stake-input" id="s-m5" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m5','Đức','Curaçao')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-head"><span class="group-tag">Bảng F</span><span class="match-date">14/6 13:00</span></div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col"><div class="team-flag">🇳🇱</div><div class="team-name">Hà Lan</div><div class="team-odds-val">1.80</div></div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col"><div class="team-flag">🇯🇵</div><div class="team-name">Nhật Bản</div><div class="team-odds-val">4.20</div></div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m6-h" onclick="selBet('m6','h',this)"><div class="bo-lbl">Chủ Thắng</div><div class="bo-team">Hà Lan</div><div class="bo-odds">1.80</div></div>
+            <div class="bet-opt draw-opt" id="m6-d" onclick="selBet('m6','d',this)"><div class="bo-lbl">Hòa</div><div class="bo-team">—</div><div class="bo-odds">3.50</div></div>
+            <div class="bet-opt" id="m6-a" onclick="selBet('m6','a',this)"><div class="bo-lbl">Khách Thắng</div><div class="bo-team">Nhật Bản</div><div class="bo-odds">4.20</div></div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns"><div class="qbtn" onclick="setQ('m6',50)">50</div><div class="qbtn" onclick="setQ('m6',100)">100</div><div class="qbtn" onclick="setQ('m6',500)">500</div><div class="qbtn" onclick="setQ('m6',1000)">1000</div></div>
+            <input class="stake-input" id="s-m6" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m6','Hà Lan','Nhật Bản')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-head"><span class="group-tag">Bảng E</span><span class="match-date">14/6 16:00</span></div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col"><div class="team-flag">🇨🇮</div><div class="team-name">Bờ Biển Ngà</div><div class="team-odds-val">2.20</div></div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col"><div class="team-flag">🇪🇨</div><div class="team-name">Ecuador</div><div class="team-odds-val">3.00</div></div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m7-h" onclick="selBet('m7','h',this)"><div class="bo-lbl">Chủ Thắng</div><div class="bo-team">Bờ Biển Ngà</div><div class="bo-odds">2.20</div></div>
+            <div class="bet-opt draw-opt" id="m7-d" onclick="selBet('m7','d',this)"><div class="bo-lbl">Hòa</div><div class="bo-team">—</div><div class="bo-odds">3.10</div></div>
+            <div class="bet-opt" id="m7-a" onclick="selBet('m7','a',this)"><div class="bo-lbl">Khách Thắng</div><div class="bo-team">Ecuador</div><div class="bo-odds">3.00</div></div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns"><div class="qbtn" onclick="setQ('m7',50)">50</div><div class="qbtn" onclick="setQ('m7',100)">100</div><div class="qbtn" onclick="setQ('m7',500)">500</div><div class="qbtn" onclick="setQ('m7',1000)">1000</div></div>
+            <input class="stake-input" id="s-m7" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m7','Bờ Biển Ngà','Ecuador')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-head"><span class="group-tag">Bảng F</span><span class="match-date">14/6 19:00</span></div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col"><div class="team-flag">🇸🇪</div><div class="team-name">Thụy Điển</div><div class="team-odds-val">1.70</div></div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col"><div class="team-flag">🇹🇳</div><div class="team-name">Tunisia</div><div class="team-odds-val">4.50</div></div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m8-h" onclick="selBet('m8','h',this)"><div class="bo-lbl">Chủ Thắng</div><div class="bo-team">Thụy Điển</div><div class="bo-odds">1.70</div></div>
+            <div class="bet-opt draw-opt" id="m8-d" onclick="selBet('m8','d',this)"><div class="bo-lbl">Hòa</div><div class="bo-team">—</div><div class="bo-odds">3.60</div></div>
+            <div class="bet-opt" id="m8-a" onclick="selBet('m8','a',this)"><div class="bo-lbl">Khách Thắng</div><div class="bo-team">Tunisia</div><div class="bo-odds">4.50</div></div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns"><div class="qbtn" onclick="setQ('m8',50)">50</div><div class="qbtn" onclick="setQ('m8',100)">100</div><div class="qbtn" onclick="setQ('m8',500)">500</div><div class="qbtn" onclick="setQ('m8',1000)">1000</div></div>
+            <input class="stake-input" id="s-m8" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m8','Thụy Điển','Tunisia')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JUN 15 -->
+    <div class="day-section" id="day-jun15">
+      <div class="mcard">
+        <div class="mcard-head"><span class="group-tag">Bảng H</span><span class="match-date">15/6 09:00</span></div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col"><div class="team-flag">🇪🇸</div><div class="team-name">Tây Ban Nha</div><div class="team-odds-val">1.28</div></div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col"><div class="team-flag">🇨🇻</div><div class="team-name">Cape Verde</div><div class="team-odds-val">8.50</div></div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m9-h" onclick="selBet('m9','h',this)"><div class="bo-lbl">Chủ Thắng</div><div class="bo-team">Tây Ban Nha</div><div class="bo-odds">1.28</div></div>
+            <div class="bet-opt draw-opt" id="m9-d" onclick="selBet('m9','d',this)"><div class="bo-lbl">Hòa</div><div class="bo-team">—</div><div class="bo-odds">6.00</div></div>
+            <div class="bet-opt" id="m9-a" onclick="selBet('m9','a',this)"><div class="bo-lbl">Khách Thắng</div><div class="bo-team">Cape Verde</div><div class="bo-odds">8.50</div></div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns"><div class="qbtn" onclick="setQ('m9',50)">50</div><div class="qbtn" onclick="setQ('m9',100)">100</div><div class="qbtn" onclick="setQ('m9',500)">500</div><div class="qbtn" onclick="setQ('m9',1000)">1000</div></div>
+            <input class="stake-input" id="s-m9" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m9','Tây Ban Nha','Cape Verde')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-head"><span class="group-tag">Bảng G</span><span class="match-date">15/6 12:00</span></div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col"><div class="team-flag">🇧🇪</div><div class="team-name">Bỉ</div><div class="team-odds-val">1.45</div></div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col"><div class="team-flag">🇪🇬</div><div class="team-name">Ai Cập</div><div class="team-odds-val">6.00</div></div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m10-h" onclick="selBet('m10','h',this)"><div class="bo-lbl">Chủ Thắng</div><div class="bo-team">Bỉ</div><div class="bo-odds">1.45</div></div>
+            <div class="bet-opt draw-opt" id="m10-d" onclick="selBet('m10','d',this)"><div class="bo-lbl">Hòa</div><div class="bo-team">—</div><div class="bo-odds">4.50</div></div>
+            <div class="bet-opt" id="m10-a" onclick="selBet('m10','a',this)"><div class="bo-lbl">Khách Thắng</div><div class="bo-team">Ai Cập</div><div class="bo-odds">6.00</div></div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns"><div class="qbtn" onclick="setQ('m10',50)">50</div><div class="qbtn" onclick="setQ('m10',100)">100</div><div class="qbtn" onclick="setQ('m10',500)">500</div><div class="qbtn" onclick="setQ('m10',1000)">1000</div></div>
+            <input class="stake-input" id="s-m10" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m10','Bỉ','Ai Cập')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-head"><span class="group-tag">Bảng H</span><span class="match-date">15/6 15:00</span></div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col"><div class="team-flag">🇸🇦</div><div class="team-name">Ả Rập Xê Út</div><div class="team-odds-val">3.80</div></div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col"><div class="team-flag">🇺🇾</div><div class="team-name">Uruguay</div><div class="team-odds-val">1.90</div></div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m11-h" onclick="selBet('m11','h',this)"><div class="bo-lbl">Chủ Thắng</div><div class="bo-team">Ả Rập Xê Út</div><div class="bo-odds">3.80</div></div>
+            <div class="bet-opt draw-opt" id="m11-d" onclick="selBet('m11','d',this)"><div class="bo-lbl">Hòa</div><div class="bo-team">—</div><div class="bo-odds">3.20</div></div>
+            <div class="bet-opt" id="m11-a" onclick="selBet('m11','a',this)"><div class="bo-lbl">Khách Thắng</div><div class="bo-team">Uruguay</div><div class="bo-odds">1.90</div></div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns"><div class="qbtn" onclick="setQ('m11',50)">50</div><div class="qbtn" onclick="setQ('m11',100)">100</div><div class="qbtn" onclick="setQ('m11',500)">500</div><div class="qbtn" onclick="setQ('m11',1000)">1000</div></div>
+            <input class="stake-input" id="s-m11" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m11','Ả Rập Xê Út','Uruguay')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+      <div class="mcard">
+        <div class="mcard-head"><span class="group-tag">Bảng G</span><span class="match-date">15/6 18:00</span></div>
+        <div class="mcard-body">
+          <div class="teams-row">
+            <div class="team-col"><div class="team-flag">🇮🇷</div><div class="team-name">Iran</div><div class="team-odds-val">2.40</div></div>
+            <div class="vs-col"><div class="vs-txt">VS</div></div>
+            <div class="team-col"><div class="team-flag">🇳🇿</div><div class="team-name">New Zealand</div><div class="team-odds-val">2.80</div></div>
+          </div>
+          <div class="bet-row">
+            <div class="bet-opt" id="m12-h" onclick="selBet('m12','h',this)"><div class="bo-lbl">Chủ Thắng</div><div class="bo-team">Iran</div><div class="bo-odds">2.40</div></div>
+            <div class="bet-opt draw-opt" id="m12-d" onclick="selBet('m12','d',this)"><div class="bo-lbl">Hòa</div><div class="bo-team">—</div><div class="bo-odds">3.00</div></div>
+            <div class="bet-opt" id="m12-a" onclick="selBet('m12','a',this)"><div class="bo-lbl">Khách Thắng</div><div class="bo-team">New Zealand</div><div class="bo-odds">2.80</div></div>
+          </div>
+          <div class="stake-row">
+            <div class="quick-btns"><div class="qbtn" onclick="setQ('m12',50)">50</div><div class="qbtn" onclick="setQ('m12',100)">100</div><div class="qbtn" onclick="setQ('m12',500)">500</div><div class="qbtn" onclick="setQ('m12',1000)">1000</div></div>
+            <input class="stake-input" id="s-m12" type="number" value="500" min="10">
+            <button class="bet-btn" onclick="askBet('m12','Iran','New Zealand')">Xác Nhận</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end matches -->
+
+  <!-- RULES -->
+  <div class="rules-section">
+    <div class="rules-title">Quy Tắc Chi Tiết</div>
+    <div class="rules-text">1. 活動期間（6月8日 00:00 – 7月19日 23:59 GMT+7），玩家可透過完成每日任務獲取Đồng Bóng Đá。
+
+2. 賠率參考 Bet365 並於賽前至少 48 小時公布，封盤後賠率固定不變。
+
+3. 每場比賽最低下注 10 Đồng Bóng Đá，無上限（受帳戶餘額限制）。
+
+4. Tự động đóng cược 5 phút trước khi bóng lăn，封盤後無法下注或修改。
+
+5. 比賽結果公布後，系統將於 24 小時內自動結算。猜中則依賠率返還（含本金），猜錯扣除本金。
+
+6. 小組賽設Chủ Thắng/Hòa/Khách Thắng三個選項；淘汰賽僅設Chủ Thắng/Khách Thắng。
+
+7. 若比賽因故Hủy或延期，該Trận所有下注將全額退還。
+
+8. 商店兌換Thời gian至 7月26日 23:59（GMT+7），逾期視同放棄。</div>
+  </div>
+
+</div><!-- end page -->
+
+<!-- ══ OVERLAYS ══════════════════════════════════════════ -->
+
+<!-- Login -->
+<div class="overlay center" id="overlay-login" onclick="closeOutside(event,'overlay-login')">
+  <div class="dialog">
+    <div class="dialog-title">Đăng Nhập帳號</div>
+    <div class="form-group">
+      <label class="form-label">ID Nhân Vật Game</label>
+      <input class="form-input" type="text" placeholder="Nhập ID nhân vật">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mã Xác Nhận</label>
+      <div class="form-row">
+        <input class="form-input" type="text" placeholder="請輸入Mã Xác Nhận">
+        <button class="code-btn" onclick="showToast('Mã Xác Nhận已發送至遊戲信箱')">發送Mã Xác Nhận</button>
+      </div>
+    </div>
+    <div class="dialog-btns">
+      <button class="dbtn cancel" onclick="closeOverlay('login')">Hủy</button>
+      <button class="dbtn confirm" onclick="doLogin()">Xác Nhận</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm bet -->
+<div class="overlay center" id="overlay-confirm" onclick="closeOutside(event,'overlay-confirm')">
+  <div class="dialog">
+    <div class="confirm-content">
+      <div class="confirm-icon">⚽</div>
+      <div class="confirm-q" id="confirm-q">Xác Nhận下注？</div>
+      <div class="confirm-detail" id="confirm-detail"></div>
+      <div class="confirm-warn">Xác NhậnCược後將無法Hủy</div>
+    </div>
+    <div class="dialog-btns" style="margin-top:20px">
+      <button class="dbtn cancel" onclick="closeOverlay('confirm')">Hủy</button>
+      <button class="dbtn confirm" onclick="doConfirmBet()">Xác NhậnCược</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task -->
+<div class="overlay" id="overlay-task" onclick="closeOutside(event,'overlay-task')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🎯 每日任務 · 獲取Đồng Bóng Đá</div>
+    <button class="sheet-close" onclick="closeOverlay('task')">✕</button>
+    <div class="sheet-body">
+      <div class="task-list">
+        <div class="task-item">
+          <div class="ti-icon">📅</div>
+          <div class="ti-info">
+            <div class="ti-name">Điểm Danh Hàng Ngày</div>
+            <div class="ti-desc">每天Đăng Nhập即可Nhận</div>
+            <div class="ti-prog"><div class="ti-bar" style="width:100%"></div></div>
+          </div>
+          <div class="ti-reward"><div class="ti-coin">🪙 +30</div><button class="ti-btn" onclick="claimTask(this,30)">Nhận</button></div>
+        </div>
+        <div class="task-item">
+          <div class="ti-icon">🔫</div>
+          <div class="ti-info">
+            <div class="ti-name">Hoàn Thành 1 Trận Đấu</div>
+            <div class="ti-desc">Tham gia và hoàn thành bất kỳ chế độ nào</div>
+            <div class="ti-prog"><div class="ti-bar" style="width:100%"></div></div>
+          </div>
+          <div class="ti-reward"><div class="ti-coin">🪙 +50</div><button class="ti-btn" onclick="claimTask(this,50)">Nhận</button></div>
+        </div>
+        <div class="task-item">
+          <div class="ti-icon">💰</div>
+          <div class="ti-info">
+            <div class="ti-name">Hoàn Thành 1 Ván Mò Vàng</div>
+            <div class="ti-desc">Hoàn thành chế độ mới "Mò Vàng"</div>
+            <div class="ti-prog"><div class="ti-bar" style="width:60%"></div></div>
+          </div>
+          <div class="ti-reward"><div class="ti-coin">🪙 +80</div><button class="ti-btn done">Đang làm</button></div>
+        </div>
+        <div class="task-item">
+          <div class="ti-icon">⏱️</div>
+          <div class="ti-info">
+            <div class="ti-name">Online Tích Lũy 60 Phút</div>
+            <div class="ti-desc">Tích lũy 60 phút online mỗi ngày</div>
+            <div class="ti-prog"><div class="ti-bar" style="width:35%"></div></div>
+          </div>
+          <div class="ti-reward"><div class="ti-coin">🪙 +40</div><button class="ti-btn done">Đang làm</button></div>
+        </div>
+        <div class="task-item">
+          <div class="ti-icon">📲</div>
+          <div class="ti-info">
+            <div class="ti-name">Chia Sẻ Mạng Xã Hội (1 lần)</div>
+            <div class="ti-desc">Chia sẻ kết quả dự đoán lên mạng xã hội</div>
+            <div class="ti-prog"><div class="ti-bar" style="width:0%"></div></div>
+          </div>
+          <div class="ti-reward"><div class="ti-coin">🪙 +100</div><button class="ti-btn" onclick="claimTask(this,100)">Chia Sẻ</button></div>
+        </div>
+        <div class="task-item">
+          <div class="ti-icon">🏅</div>
+          <div class="ti-info">
+            <div class="ti-name">Tích Lũy 5 Lần Đặt Cược (1 lần)</div>
+            <div class="ti-desc">Hoàn thành 5 lần đặt cược bất kỳ</div>
+            <div class="ti-prog"><div class="ti-bar" style="width:20%"></div></div>
+          </div>
+          <div class="ti-reward"><div class="ti-coin">🪙 +100</div><button class="ti-btn done">Chưa xong</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Shop -->
+<div class="overlay" id="overlay-shop" onclick="closeOutside(event,'overlay-shop')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">🏪 Cửa Hàng Xanh</div>
+    <button class="sheet-close" onclick="closeOverlay('shop')">✕</button>
+    <div class="sheet-body">
+      <div class="shop-grid">
+        <div class="shop-item rare"><div class="si-tag">Giới hạn</div><div class="si-icon">💎</div><div class="si-name">Kim Cương ×10</div><div class="si-price">🪙 800</div></div>
+        <div class="shop-item"><div class="si-tag">Giới hạn</div><div class="si-icon">🖼️</div><div class="si-name">Khung Avatar</div><div class="si-price">🪙 300</div></div>
+        <div class="shop-item"><div class="si-tag">Giới hạn</div><div class="si-icon">🪪</div><div class="si-name">Danh Thiếp</div><div class="si-price">🪙 200</div></div>
+        <div class="shop-item rare"><div class="si-tag">Hiếm</div><div class="si-icon">🔫</div><div class="si-name">Súng Giới Hạn</div><div class="si-price">🪙 1,200</div></div>
+        <div class="shop-item rare"><div class="si-tag">Hiếm</div><div class="si-icon">🦺</div><div class="si-name">Trang Phục GT</div><div class="si-price">🪙 1,500</div></div>
+        <div class="shop-item rare"><div class="si-tag">Hiếm</div><div class="si-icon">🧑</div><div class="si-name">Nhân Vật GT</div><div class="si-price">🪙 1,800</div></div>
+        <div class="shop-item"><div class="si-tag">Thường</div><div class="si-icon">🌱</div><div class="si-name">Xu Tăng Trưởng</div><div class="si-price">🪙 150</div></div>
+        <div class="shop-item"><div class="si-tag">Thường</div><div class="si-icon">🃏</div><div class="si-name">Thẻ Nâng Cấp ×3</div><div class="si-price">🪙 250</div></div>
+        <div class="shop-item"><div class="si-tag">Thường</div><div class="si-icon">🎫</div><div class="si-name">Điểm Thưởng ×100</div><div class="si-price">🪙 400</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Record -->
+<div class="overlay" id="overlay-record" onclick="closeOutside(event,'overlay-record')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📋 Lịch Sử Thưởng</div>
+    <button class="sheet-close" onclick="closeOverlay('record')">✕</button>
+    <div class="sheet-body" style="padding-top:14px">
+      <div class="rec-tabs">
+        <div class="rec-tab active" onclick="switchTab(this,'tab-bet')">Lịch Sử Cược</div>
+        <div class="rec-tab" onclick="switchTab(this,'tab-redeem')">Lịch Sử Đổi Thưởng</div>
+      </div>
+      <div class="rec-panel active" id="tab-bet">
+        <table class="rec-table" id="betTable">
+          <thead><tr><th>Trận</th><th>Cược</th><th>Số tiền</th><th>Thời gian</th><th>Lãi/Lỗ</th></tr></thead>
+          <tbody id="betTableBody">
+            <tr><td colspan="5"><div class="rec-empty">暫無Lịch Sử Cược</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="rec-panel" id="tab-redeem">
+        <table class="rec-table">
+          <thead><tr><th>Vật phẩm</th><th>Số tiền</th><th>Thời gian</th></tr></thead>
+          <tbody>
+            <tr><td colspan="3"><div class="rec-empty">暫無Lịch Sử Đổi Thưởng</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────
+let coins = 10000;
+const betSel = {};
+let pendingBet = null;
+const betHistory = [];
+
+// Pre-populate with example record
+betHistory.push({
+  match:'Haiti vs Scotland', pick:'Khách Thắng', amount:500, odds:1.90,
+  time:'06/13 18:00', status:'win', pnl:+450
+});
+
+// ── Coins ──────────────────────────────────────────
+function updateCoins(d) {
+  coins += d;
+  const v = coins.toLocaleString();
+  document.getElementById('coinDisplay').textContent = v;
+  document.getElementById('coinDisplay2').textContent = v;
+}
+
+// ── Toast ──────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Day tabs ───────────────────────────────────────
+function switchDay(day, el) {
+  document.querySelectorAll('.day-section').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.dtab').forEach(t => t.classList.remove('active'));
+  document.getElementById('day-' + day).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── Bet selection ──────────────────────────────────
+function selBet(mid, side, el) {
+  ['h','d','a'].forEach(s => {
+    const n = document.getElementById(mid+'-'+s);
+    if (n) n.classList.remove('active-h','active-d','active-a');
+  });
+  el.classList.add(side==='h'?'active-h':side==='d'?'active-d':'active-a');
+  betSel[mid] = side;
+}
+
+function setQ(mid, val) {
+  document.getElementById('s-'+mid).value = val;
+}
+
+// ── Ask bet (show confirm) ─────────────────────────
+function askBet(mid, home, away) {
+  if (!betSel[mid]) { showToast('⚠ 請先選擇Cược方向'); return; }
+  const amt = parseInt(document.getElementById('s-'+mid).value) || 0;
+  if (amt < 10) { showToast('⚠ 最低Cược 10 Đồng Bóng Đá'); return; }
+  if (amt > coins) { showToast('⚠ Đồng Bóng Đá餘額不足'); return; }
+
+  const sideMap = {'h':'Chủ Thắng（'+home+')','d':'Hòa','a':'Khách Thắng（'+away+')'};
+  const oddsEl = document.getElementById(mid+'-'+betSel[mid]);
+  const odds = oddsEl ? parseFloat(oddsEl.querySelector('.bo-odds').textContent) : 1;
+  const expected = Math.round(amt * odds);
+
+  pendingBet = { mid, home, away, side: betSel[mid], sideLabel: sideMap[betSel[mid]], amt, odds, expected };
+
+  document.getElementById('confirm-q').textContent =
+    `是否Xác Nhận【${sideMap[betSel[mid]]}】，Cược ${amt.toLocaleString()} Đồng Bóng Đá？`;
+  document.getElementById('confirm-detail').textContent =
+    `賠率 ×${odds}　預計返還 ${expected.toLocaleString()} 幣（含本金）`;
+
+  openOverlay('confirm');
+}
+
+function doConfirmBet() {
+  if (!pendingBet) return;
+  const b = pendingBet;
+  updateCoins(-b.amt);
+
+  const now = new Date();
+  const ts = `${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  betHistory.unshift({
+    match: b.home + ' vs ' + b.away,
+    pick: b.sideLabel, amount: b.amt, odds: b.odds,
+    time: ts, status:'pending', pnl: 0
+  });
+
+  showToast(`✅ Cược成功 · ${b.sideLabel} · ${b.amt.toLocaleString()} 幣`);
+  closeOverlay('confirm');
+
+  // reset selection
+  ['h','d','a'].forEach(s => {
+    const n = document.getElementById(b.mid+'-'+s);
+    if (n) n.classList.remove('active-h','active-d','active-a');
+  });
+  delete betSel[b.mid];
+  document.getElementById('s-'+b.mid).value = 500;
+  pendingBet = null;
+}
+
+// ── Record table ───────────────────────────────────
+function renderBetTable() {
+  const tbody = document.getElementById('betTableBody');
+  if (betHistory.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="rec-empty">暫無Lịch Sử Cược</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = betHistory.map(h => {
+    const statusHtml = h.status==='win'
+      ? `<span class="status-win">勝</span>`
+      : h.status==='lose'
+      ? `<span class="status-lose">負</span>`
+      : `<span class="status-pend">Chờ KQ</span>`;
+    const pnlHtml = h.status==='pending'
+      ? `<span class="status-pend">—</span>`
+      : `<span class="${h.pnl>=0?'pnl-pos':'pnl-neg'}">${h.pnl>=0?'+':''}${h.pnl.toLocaleString()}</span>`;
+    return `<tr>
+      <td>${h.match}</td>
+      <td>${h.pick}<br><small style="color:var(--dim2)">×${h.odds}</small></td>
+      <td>${h.amount.toLocaleString()}</td>
+      <td style="font-size:10px;color:var(--dim2)">${h.time}<br>${statusHtml}</td>
+      <td>${pnlHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Tab switch ─────────────────────────────────────
+function switchTab(el, panelId) {
+  el.closest('.sheet-body').querySelectorAll('.rec-tab').forEach(t => t.classList.remove('active'));
+  el.closest('.sheet-body').querySelectorAll('.rec-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ── Overlay ────────────────────────────────────────
+function openOverlay(id) {
+  if (id === 'record') renderBetTable();
+  document.getElementById('overlay-'+id).classList.add('open');
+}
+function closeOverlay(id) {
+  document.getElementById('overlay-'+id).classList.remove('open');
+}
+function closeOutside(e, id) {
+  if (e.target === document.getElementById(id)) closeOverlay(id.replace('overlay-',''));
+}
+
+// ── Task claim ─────────────────────────────────────
+function claimTask(btn, amt) {
+  if (btn.classList.contains('done')) return;
+  updateCoins(amt);
+  btn.classList.add('done'); btn.textContent = '已Nhận';
+  showToast('🎉 Nhận được +' + amt + ' Đồng Bóng Đá！');
+}
+
+// ── Login ──────────────────────────────────────────
+function doLogin() {
+  closeOverlay('login');
+  showToast('✅ Đăng Nhập成功！');
+}
+</script>
+</body>
+</html>
